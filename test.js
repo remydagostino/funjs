@@ -44,7 +44,7 @@ describe('Maybe Monad', function() {
     }
   };
 
-  var intHalveM = al.liftM(intHalve);
+  var intHalveM = al.chain(intHalve);
 
   it('Halves 20 twice', function() {
     var result = al.compose(intHalveM, intHalve)(20);
@@ -88,7 +88,33 @@ describe('Applicative Arrays', function() {
   });
 
   it('Maybes with no value', function() {
-    var result = al.liftA2(al.plus)(Maybe.none(5), Maybe.some(4));
+    var result = al.liftA2(al.plus)(Maybe.none(), Maybe.some(4));
+
+    assert.isFalse(result.isSome());
+  });
+});
+
+describe('Monadic Lift', function() {
+  var maybeDivide = al.Lambda(2).default(function(divisor, a) {
+    if (divisor === 0) {
+      return Maybe.none();
+    }
+    else {
+      return Maybe.some(a / divisor);
+    }
+  });
+
+  var maybeDivideM = al.liftM2(maybeDivide);
+
+  it('accepts two monads', function() {
+    var result = maybeDivideM(Maybe.some(2), Maybe.some(10));
+
+    assert.isTrue(result.isSome());
+    assert.equal(result.value(), 5);
+  });
+
+  it('accepts two monads', function() {
+    var result = maybeDivideM(Maybe.some(0), Maybe.some(10));
 
     assert.isFalse(result.isSome());
   });

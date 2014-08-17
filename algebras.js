@@ -130,12 +130,16 @@ var chain = Lambda(2);
 
 // Lifting
 // ... Monads
-var liftM = Lambda(2).default(function(fn, a1) {
-  return chain(fn, a1);
-});
-
 var liftM2 = Lambda(3).default(function(fn, a1, a2) {
   return chain(chain(fn, a1), a2);
+});
+
+var liftM3 = Lambda(4).default(function(fn, a1, a2, a3) {
+  return chain(chain(chain(fn, a1), a2), a3);
+});
+
+var liftM4 = Lambda(3).default(function(fn, a1, a2, a3, a4) {
+  return chain(chain(chain(chain(fn, a1), a2), a3, a4));
 });
 
 // ... Applicatives
@@ -267,6 +271,7 @@ ap = ap.case(
 
 
 module.exports = {
+  Lambda: Lambda,
   K: K,
   fmap: fmap,
   plus: plus,
@@ -277,7 +282,9 @@ module.exports = {
   isType: isType,
   chain: chain,
   ap: ap,
-  liftM: liftM,
+  liftM2: liftM2,
+  liftM3: liftM3,
+  liftM4: liftM4,
   liftA2: liftA2,
   liftA3: liftA3,
   liftA4: liftA4,
