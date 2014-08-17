@@ -1,5 +1,6 @@
 var assert   = require('chai').assert,
-    al       = require('./algebras');
+    al       = require('./algebras'),
+    Maybe    = al.Maybe;
 
 describe('Something', function() {
   it('has curried functions', function() {
@@ -30,6 +31,66 @@ describe('Something', function() {
       al.fmap(al.plus(2), otherThing).isSome(),
       false
     );
+  });
+});
+
+describe('Maybe Monad', function() {
+  var intHalve = function(a) {
+    if (a % 2 === 0) {
+      return al.Maybe.some(a / 2);
+    }
+    else {
+      return al.Maybe.none();
+    }
+  };
+
+  var intHalveM = al.liftM(intHalve);
+
+  it('Halves 20 twice', function() {
+    var result = al.compose(intHalveM, intHalve)(20);
+
+    assert.isTrue(result.isSome());
+    assert.equal(result.value(), 5);
+  });
+
+
+  it('Halves 20 not three times', function() {
+    var result = al.compose(intHalveM, intHalveM, intHalve)(20);
+
+    assert.isFalse(result.isSome());
+  });
+
+  it('Halves 20 not four times', function() {
+    var result = al.compose(intHalveM, intHalveM, intHalveM, intHalve)(20);
+
+    assert.isFalse(result.isSome());
+  });
+});
+
+describe('Applicative Arrays', function() {
+  it('maps functions across inputs', function() {
+    var result = al.ap([al.multiply(2), al.plus(3)], [1, 2, 3]);
+
+    assert.deepEqual(result, [2, 4, 6, 4, 5, 6]);
+  });
+
+  it('maps multiple arity functions', function() {
+    var result = al.ap(al.ap([al.multiply, al.plus], [1, 2]), [3, 4]);
+
+    assert.deepEqual(result, [3, 4, 6, 8, 4, 5, 5, 6]);
+  });
+
+  it('maps functions inside maybes', function() {
+    var result = al.liftA2(al.plus)(Maybe.some(5), Maybe.some(4));
+
+    assert.isTrue(result.isSome());
+    assert.equal(result.value(), 9);
+  });
+
+  it('Maybes with no value', function() {
+    var result = al.liftA2(al.plus)(Maybe.none(5), Maybe.some(4));
+
+    assert.isFalse(result.isSome());
   });
 });
 
