@@ -58,6 +58,26 @@ var Lambda = function(numArgs) {
   return guard;
 };
 
+// Zips functions with arguments to produce a truth test
+var testArgs = function() {
+  var tests = argsToArray(arguments);
+
+  return function() {
+    var args = arguments,
+        isMatch = true,
+        i;
+
+    for (i in tests) {
+      if (!tests[i](args[i])) {
+        isMatch = false;
+        break;
+      }
+    }
+
+    return isMatch;
+  };
+};
+
 // Constants
 var K = function(v) {
   return function() { return v; };
@@ -91,24 +111,25 @@ var isType = Lambda(2).default(function(type, a) {
 
 var isArray = function(a) { return Array.isArray(a); };
 
-// Zips functions with arguments to produce a truth test
-var testArgs = function() {
-  var tests = argsToArray(arguments);
+// Strings
+var reverse = Lambda(1).case(
+  testArgs(isArray),
+  function(a) {
+    return a.reverse();
+  }
+).case(
+  testArgs(isType('string')),
+  function(a) {
+    return a.split('').reverse().join('');
+  }
+);
 
-  return function() {
-    var args = arguments,
-        isMatch = true,
-        i;
+var toUpperCase = function(str) {
+  return str.toUpperCase();
+};
 
-    for (i in tests) {
-      if (!tests[i](args[i])) {
-        isMatch = false;
-        break;
-      }
-    }
-
-    return isMatch;
-  };
+var toLowerCase = function(str) {
+  return str.toLowerCase();
 };
 
 // Semigroup
@@ -216,6 +237,13 @@ var compose = function() {
   };
 };
 
+fmap = fmap.case(
+  testArgs(isType('function'), isType('function')),
+  function(fn, fb) {
+    return compose(fn, fb);
+  }
+);
+
 
 // =====================================
 // Maybe
@@ -273,21 +301,28 @@ ap = ap.case(
 module.exports = {
   Lambda: Lambda,
   K: K,
-  fmap: fmap,
   plus: plus,
   minus: minus,
   multiply: multiply,
   divide: divide,
   isInstance: isInstance,
+  compose: compose,
   isType: isType,
+
+  reverse: reverse,
+  toUpperCase: toUpperCase,
+  toLowerCase: toLowerCase,
+
+  fmap: fmap,
   chain: chain,
   ap: ap,
+
   liftM2: liftM2,
   liftM3: liftM3,
   liftM4: liftM4,
   liftA2: liftA2,
   liftA3: liftA3,
   liftA4: liftA4,
-  compose: compose,
+
   Maybe: Maybe
 };

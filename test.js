@@ -120,3 +120,11 @@ describe('Monadic Lift', function() {
   });
 });
 
+describe('Map over functions', function() {
+  var reverseUpper = al.fmap(al.reverse, al.toUpperCase);
+
+  it('composes two string functions', function() {
+    assert.equal(reverseUpper('Hello'), 'OLLEH');
+  });
+});
+
