@@ -58,6 +58,26 @@ var Lambda = function(numArgs) {
   return guard;
 };
 
+// Semigroup
+//  concat :: a -> a -> a
+var concat = Lambda(2);
+
+// Functor
+//  fmap :: (a -> b) -> f a -> f b
+var fmap = Lambda(2);
+
+// Applicative
+//  ap :: f (a -> b) -> f a -> f b
+var ap = Lambda(2);
+
+// Monad
+//  chain :: (a -> m b) -> m a -> m b
+var chain = Lambda(2);
+
+// Wrap a thing in a monadic type
+//  of :: a -> m a
+var of = Lambda(2);
+
 // Zips functions with arguments to produce a truth test
 var testArgs = function() {
   var tests = argsToArray(arguments);
@@ -82,6 +102,18 @@ var testArgs = function() {
 var K = function(v) {
   return function() { return v; };
 };
+
+var compose = function() {
+  var funcs = arguments;
+  return function() {
+    var args = arguments;
+    for (var i = funcs.length - 1; i >= 0; i--) {
+      args = [funcs[i].apply(this, args)];
+    }
+    return args[0];
+  };
+};
+
 
 // Arithmatic
 var plus = Lambda(2).default(function(a, b) {
@@ -132,27 +164,64 @@ var toLowerCase = function(str) {
   return str.toLowerCase();
 };
 
-// Semigroup
-//  concat :: a -> a -> a
-var concat = Lambda(2);
 
-// Functor
-//  fmap :: (a -> b) -> f a -> f b
-var fmap = Lambda(2);
+// Fold / Reduce
+var foldl = Lambda(3).default(function(fn, initial, a) {
+  return a.reduce(function(m, v) {
+    return fn(m, v);
+  }, initial);
+});
 
-// Applicative
-//  ap :: f (a -> b) -> f a -> f b
-var ap = Lambda(2);
+var flatten = Lambda(1).case(isArray, foldl(concat, []));
 
-// Monad
-//  chain :: (a -> m b) -> m a -> m b
-var chain = Lambda(2);
+
+var Do = function(type /*, monads, callback */) {
+  var args = argsToArray(arguments),
+      cb;
+
+  cb = foldl(
+    function(memo, monad) {
+      return compose(memo, function() {
+        return;
+      });
+    },
+    compose(of(type), args[args.length - 1]),
+    args.slice(1, -1)
+  );
+
+};
 
 
 // Lifting
 // ... Monads
 var liftM2 = Lambda(3).default(function(fn, a1, a2) {
-  return chain(chain(fn, a1), a2);
+  return chain(
+    function(x1) {
+      return chain(
+        function(x2) {
+          return fn(x1, x2);
+        },
+        a2
+      );
+    },
+    a1
+  );
+
+  return compose(
+    function(xs) {
+      return fn.apply(this, xs);
+    },
+    function(xs) {
+      return chain(function(x2) {
+        return xs.concat([x2]);
+      }, a2);
+    },
+    function(xs) {
+      return chain(function(x1) {
+        return xs.concat([x1]);
+      }, a1);
+    }
+  )([]);
 });
 
 var liftM3 = Lambda(4).default(function(fn, a1, a2, a3) {
@@ -162,6 +231,20 @@ var liftM3 = Lambda(4).default(function(fn, a1, a2, a3) {
 var liftM4 = Lambda(3).default(function(fn, a1, a2, a3, a4) {
   return chain(chain(chain(chain(fn, a1), a2), a3, a4));
 });
+
+var liftMx = function(n, fn) {
+  return Lambda(n).default(function() {
+    var args;
+
+    args = argsToArray(arguments);
+
+    return chain(args[0], function(a1) {
+      return chain(args[1], function(a2) {
+        return fn(a1, a2);
+      });
+    });
+  });
+};
 
 // ... Applicatives
 var liftA2 = Lambda(3).default(function(fn, a1, a2) {
@@ -178,15 +261,6 @@ var liftA4 = Lambda(5).default(function(fn, a1, a2, a3, a4) {
 
 // =====================================
 // Arrays
-
-// Fold / Reduce
-var foldL = Lambda(3).default(function(fn, initial, a) {
-  return a.reduce(function(m, v) {
-    return fn(m, v);
-  }, initial);
-});
-
-var flatten = Lambda(1).case(isArray, foldL(concat, []));
 
 // Semigroup
 concat = concat.case(
@@ -225,18 +299,6 @@ ap = ap.case(
 
 // =====================================
 // Functions
-
-var compose = function() {
-  var funcs = arguments;
-  return function() {
-    var args = arguments;
-    for (var i = funcs.length - 1; i >= 0; i--) {
-      args = [funcs[i].apply(this, args)];
-    }
-    return args[0];
-  };
-};
-
 fmap = fmap.case(
   testArgs(isType('function'), isType('function')),
   function(fn, fb) {

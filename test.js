@@ -106,15 +106,21 @@ describe('Monadic Lift', function() {
 
   var maybeDivideM = al.liftM2(maybeDivide);
 
-  it('accepts two monads', function() {
+  it('accepts two maybes', function() {
     var result = maybeDivideM(Maybe.some(2), Maybe.some(10));
 
     assert.isTrue(result.isSome());
     assert.equal(result.value(), 5);
   });
 
-  it('accepts two monads', function() {
+  it('accepts two maybes and unwraps their values', function() {
     var result = maybeDivideM(Maybe.some(0), Maybe.some(10));
+
+    assert.isFalse(result.isSome());
+  });
+
+  it('accepts two maybes and behaves properly when `none`', function() {
+    var result = maybeDivideM(Maybe.some(2), Maybe.none());
 
     assert.isFalse(result.isSome());
   });
