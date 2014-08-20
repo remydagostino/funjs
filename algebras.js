@@ -114,6 +114,11 @@ var compose = function() {
   };
 };
 
+// Logic
+var equals = Lambda(2).default(function(a, b) {
+  return a === b;
+});
+
 
 // Arithmatic
 var plus = Lambda(2).default(function(a, b) {
@@ -175,89 +180,50 @@ var foldl = Lambda(3).default(function(fn, initial, a) {
 var flatten = Lambda(1).case(isArray, foldl(concat, []));
 
 
-var Do = function(type /*, monads, callback */) {
+var Do = function(/*, monads, callback */) {
   var args = argsToArray(arguments),
-      cb;
+      fn, monads;
 
-  cb = foldl(
-    function(memo, monad) {
-      return compose(memo, function() {
-        return;
-      });
+  monads = args.slice(0, -1);
+  fn     = args[args.length - 1];
+
+  return monads.reduceRight(
+    function(memo, a) {
+      return function(xs) {
+        return chain(function(x) {
+          return memo(xs.concat([x]));
+        }, a);
+      }
     },
-    compose(of(type), args[args.length - 1]),
-    args.slice(1, -1)
-  );
-
+    function(xs) {
+      return fn.apply(this, xs);
+    }
+  )([]);
 };
 
 
 // Lifting
 // ... Monads
-var liftM2 = Lambda(3).default(function(fn, a1, a2) {
-  return chain(
-    function(x1) {
-      return chain(
-        function(x2) {
-          return fn(x1, x2);
-        },
-        a2
-      );
-    },
-    a1
-  );
-
-  return compose(
-    function(xs) {
-      return fn.apply(this, xs);
-    },
-    function(xs) {
-      return chain(function(x2) {
-        return xs.concat([x2]);
-      }, a2);
-    },
-    function(xs) {
-      return chain(function(x1) {
-        return xs.concat([x1]);
-      }, a1);
-    }
-  )([]);
-});
-
-var liftM3 = Lambda(4).default(function(fn, a1, a2, a3) {
-  return chain(chain(chain(fn, a1), a2), a3);
-});
-
-var liftM4 = Lambda(3).default(function(fn, a1, a2, a3, a4) {
-  return chain(chain(chain(chain(fn, a1), a2), a3, a4));
-});
-
-var liftMx = function(n, fn) {
+var liftM = function(n, fn) {
   return Lambda(n).default(function() {
-    var args;
-
-    args = argsToArray(arguments);
-
-    return chain(args[0], function(a1) {
-      return chain(args[1], function(a2) {
-        return fn(a1, a2);
-      });
-    });
+    return Do.apply(this, argsToArray(arguments).concat([fn]));
   });
 };
 
 // ... Applicatives
-var liftA2 = Lambda(3).default(function(fn, a1, a2) {
-  return ap(fmap(fn, a1), a2);
-});
+var liftA = function(n, fn) {
+  return Lambda(n).default(function(a1) {
+    var args, result;
 
-var liftA3 = Lambda(4).default(function(fn, a1, a2, a3) {
-  return ap(ap(fmap(fn, a1), a2), a3);
-});
-
-var liftA4 = Lambda(5).default(function(fn, a1, a2, a3, a4) {
-  return ap(ap(ap(fmap(fn, a1), a2), a3), a4);
-});
+    return foldl(
+      function(memo, a) {
+        return ap(memo, a);
+      },
+      fmap(fn, a1),
+      argsToArray(arguments).slice(1)
+    );
+  });
+};
 
 // =====================================
 // Arrays
@@ -294,6 +260,13 @@ ap = ap.case(
     return flatten(fa.map(function(f) {
       return fmap(f, fb);
     }));
+  }
+);
+
+of = of.case(
+  testArgs(equals(Array), K(true)),
+  function(t, a) {
+    return [a];
   }
 );
 
@@ -359,6 +332,18 @@ ap = ap.case(
   }
 );
 
+of = of.case(
+  testArgs(equals(Maybe), K(true)),
+  function(t, a) {
+    if (a === null || a === undefined) {
+      return Maybe.none();
+    }
+    else {
+      return Maybe.some(a);
+    }
+  }
+);
+
 
 module.exports = {
   Lambda: Lambda,
@@ -378,13 +363,11 @@ module.exports = {
   fmap: fmap,
   chain: chain,
   ap: ap,
+  of: of,
 
-  liftM2: liftM2,
-  liftM3: liftM3,
-  liftM4: liftM4,
-  liftA2: liftA2,
-  liftA3: liftA3,
-  liftA4: liftA4,
+  Do: Do,
+  liftM: liftM,
+  liftA: liftA,
 
   Maybe: Maybe
 };

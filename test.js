@@ -81,14 +81,14 @@ describe('Applicative Arrays', function() {
   });
 
   it('maps functions inside maybes', function() {
-    var result = al.liftA2(al.plus)(Maybe.some(5), Maybe.some(4));
+    var result = al.liftA(2, al.plus)(Maybe.some(5), Maybe.some(4));
 
     assert.isTrue(result.isSome());
     assert.equal(result.value(), 9);
   });
 
   it('Maybes with no value', function() {
-    var result = al.liftA2(al.plus)(Maybe.none(), Maybe.some(4));
+    var result = al.liftA(2, al.plus)(Maybe.none(), Maybe.some(4));
 
     assert.isFalse(result.isSome());
   });
@@ -104,7 +104,7 @@ describe('Monadic Lift', function() {
     }
   });
 
-  var maybeDivideM = al.liftM2(maybeDivide);
+  var maybeDivideM = al.liftM(2, maybeDivide);
 
   it('accepts two maybes', function() {
     var result = maybeDivideM(Maybe.some(2), Maybe.some(10));
@@ -123,6 +123,33 @@ describe('Monadic Lift', function() {
     var result = maybeDivideM(Maybe.some(2), Maybe.none());
 
     assert.isFalse(result.isSome());
+  });
+});
+
+describe('Do notation', function() {
+  it('unwraps arrays', function() {
+    var result = al.Do(
+      ['a', 'b'],
+      ['x', 'y'],
+      function(a1, a2) {
+        return al.of(Array, [a1, a2]);
+      }
+    );
+
+    assert.deepEqual(result, [['a','x'],['a','y'],['b','x'],['b','y']]);
+  });
+
+  it('unwraps maybes', function() {
+    var result = al.Do(
+      Maybe.some('Hello'),
+      Maybe.some('World'),
+      function(a1, a2) {
+        return al.of(Maybe, [a1 + ' ' + a2]);
+      }
+    );
+
+    assert.isTrue(result.isSome());
+    assert.equal(result.value(), 'Hello World');
   });
 });
 
