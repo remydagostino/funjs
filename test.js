@@ -2,7 +2,7 @@ var assert   = require('chai').assert,
     al       = require('./algebras'),
     Maybe    = al.Maybe;
 
-describe('Something', function() {
+describe('Lambda constructor', function() {
   it('has curried functions', function() {
     assert.equal(al.plus(1,2), 3);
     assert.equal(al.plus(1)(2), 3);

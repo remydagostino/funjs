@@ -5,11 +5,11 @@ var argsToArray = function(args) {
 
 // Creates an auto-curried pattern matching function
 // that can be extended with .case(predicate, expression)
-var Lambda = function(numArgs) {
+var Lambda = function(numArgs, _tests, _defaultCase) {
   var guard, fn, tests, defaultCase;
 
-  tests       = [];
-  defaultCase = null;
+  tests       = _tests ? _tests.slice(0) : [];
+  defaultCase = _defaultCase || null;
 
   fn = function() {
     var i, test, result;
@@ -53,6 +53,10 @@ var Lambda = function(numArgs) {
   guard.default = function(expression) {
     defaultCase = expression;
     return guard;
+  };
+
+  guard.clone = function() {
+    return Lambda(numArgs, tests, defaultCase);
   };
 
   return guard;
