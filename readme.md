@@ -1,17 +1,28 @@
+# Functional Point-Free Javascript
+
+No native prototypes modified.
+
+Money back gaurentee.
+
+
+## Crazy Experiments
+
 ```
 // Crazy Idea: Do syntax
 Do(
-  // Specify the type
-  Array,
   // Monads go here
   monadX,
   monadY,
   monadZ,
   // Callback goes here, gets the unwrapped values from flatmapping
   function(x, y, z) {
-    // Gets each set of unwrapped values, whatever is returned gets
-    // automatically wrapped in the correct type
-
+    // Gets each set of unwrapped values
   }
 );
 ```
+
+---
+
+Inspired by Fantasy Land 
+those guys probably actually know what they are doing
+

@@ -73,6 +73,8 @@
       return Lambda(numArgs, _cases, _defaultCase);
     };
 
+    guard.numArgs = numArgs;
+
     return guard;
   };
 
