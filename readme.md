@@ -7,7 +7,7 @@ Money back gaurentee.
 
 ## Crazy Experiments
 
-```
+```javascript
 // Crazy Idea: Do syntax
 Do(
   // Monads go here

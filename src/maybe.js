@@ -6,6 +6,8 @@
     root.Maybe = factory(root.Lambda, root.prelude);
   }
 })(this, function(Lambda, _) {
+  'use strict';
+
   var Maybe = function(isSomething, value) {
     this.isSome = _.K(!!isSomething);
     this.value  = _.K(value);
