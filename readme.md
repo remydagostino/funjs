@@ -23,6 +23,7 @@ Do(
 
 ---
 
-Inspired by Fantasy Land 
-those guys probably actually know what they are doing
+Inspired by [Fantasy Land](https://github.com/fantasyland)
+
+those guys probably know what they are doing
 
