@@ -9,20 +9,33 @@
   'use strict';
 
   var Future = function(perform) {
-    this.get = function(cb) {
-      perform(function(result) {
+    this.get = this.perform = function(cb) {
+      if (perform.length === 0) {
         if (_.isType('function', cb)) {
-          cb(result);
+          cb(perform());
         }
-      });
+      }
+      else {
+        perform(function(result) {
+          if (_.isType('function', cb)) {
+            cb(result);
+          }
+        });
+      }
     };
   };
 
+  // Handles promises and constants
   _.of.case(
     _.testArgs(_.equals(Future), _.K(true)),
     function(t, a) {
       return new Future(function(done) {
-        done(a);
+        if (a.then) {
+          a.then(done);
+        }
+        else {
+          done(a);
+        }
       });
     }
   );
