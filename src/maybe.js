@@ -21,53 +21,43 @@
     return new Maybe(false);
   };
 
-  _.fmap.case(
-    _.testArgs(_.isType('function'), _.isInstance(Maybe)),
-    function(fn, a) {
-      if (a.isSome()) {
-        return Maybe.some(fn(a.value()));
-      }
-      else {
-        return Maybe.none();
-      }
+  Maybe.prototype.fmap = function(fn) {
+    if (this.isSome()) {
+      return Maybe.some(fn(this.value()));
     }
-  );
+    else {
+      return Maybe.none();
+    }
+  };
 
-  _.mbind.case(
-    _.testArgs(_.isType('function'), _.isInstance(Maybe)),
-    function(fn, a) {
-      if (a.isSome()) {
-        return fn(a.value());
-      }
-      else {
-        return Maybe.none();
-      }
-    }
-  );
+  Maybe.prototype.map = Maybe.prototype.fmap;
 
-  _.ap.case(
-    _.testArgs(_.isInstance(Maybe), _.isInstance(Maybe)),
-    function(a, b) {
-      if (a.isSome() && b.isSome()) {
-        return Maybe.some(a.value()(b.value()));
-      }
-      else {
-        return Maybe.none();
-      }
+  Maybe.prototype.chain = function(fn) {
+    if (this.isSome()) {
+      return fn(this.value());
     }
-  );
+    else {
+      return Maybe.none();
+    }
+  };
 
-  _.of.case(
-    _.testArgs(_.equals(Maybe), _.K(true)),
-    function(t, a) {
-      if (a === null || a === undefined) {
-        return Maybe.none();
-      }
-      else {
-        return Maybe.some(a);
-      }
+  Maybe.prototype.ap = function(a) {
+    if (this.isSome() && a.isSome()) {
+      return Maybe.some(this.value()(a.value()));
     }
-  );
+    else {
+      return Maybe.none();
+    }
+  };
+
+  Maybe.of = function(a) {
+    if (a === null || a === undefined) {
+      return Maybe.none();
+    }
+    else {
+      return Maybe.some(a);
+    }
+  };
 
   return Maybe;
 });

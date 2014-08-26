@@ -100,6 +100,14 @@
     return a instanceof fn;
   });
 
+  var isNone = Lambda(1).default(function(a) {
+    return typeof a === 'undefined' || a === null;
+  });
+
+  var hasMethod = Lambda(2).default(function(fnName, a) {
+    return !isNone(a) && typeof a[fnName] === 'function';
+  });
+
   // Returns true if typeof a evaluates to type
   var isType = Lambda(2).default(function(type, a) {
     return typeof a === type;
@@ -241,6 +249,49 @@
     }
   );
 
+  // =====================================
+  // Fantasy Land
+
+  concat.case(
+    testArgs(hasMethod('concat'), hasMethod('concat')),
+    function(a, b) {
+      return a.concat(b);
+    }
+  );
+
+  fmap.case(
+    testArgs(isType('function'), hasMethod('fmap')),
+    function(fn, a) {
+      return a.fmap(fn);
+    }
+  ).case(
+    testArgs(isType('function'), hasMethod('map')),
+    function(fn, a) {
+      return a.map(fn);
+    }
+  );
+
+  ap.case(
+    testArgs(isType('function'), hasMethod('ap')),
+    function(a, b) {
+      return a.ap(b);
+    }
+  );
+
+  mbind.case(
+    testArgs(isType('function'), hasMethod('chain')),
+    function(fn, a) {
+      return a.chain(fn);
+    }
+  );
+
+  of.case(
+    testArgs(hasMethod('of'), K(true)),
+    function(a, b) {
+      return a.of(b);
+    }
+  );
+
   return {
     K: K,
     plus: plus,
@@ -253,6 +304,8 @@
     equals: equals,
 
     isType: isType,
+    isNone: isNone,
+    hasMethod: hasMethod,
     testArgs: testArgs,
 
     reverse: reverse,
