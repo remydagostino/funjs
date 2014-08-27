@@ -9,42 +9,55 @@
   'use strict';
 
   var IO = function(perform) {
-    this.perform = perform;
+    this.get = this.perform = function(cb) {
+      if (perform.length === 0) {
+        if (_.isType('function', cb)) {
+          cb(perform());
+        }
+      }
+      else {
+        perform(function(result) {
+          if (_.isType('function', cb)) {
+            cb(result);
+          }
+        });
+      }
+    };
   };
 
-  _.of.case(
-    _.testArgs(_.equals(IO), _.K(true)),
-    function(t, a) {
-      return new IO(_.K(a));
-    }
-  );
+  // Handles promises and constants
+  IO.of = function(a) {
+    return new IO(function(done) {
+      if (a.then) {
+        a.then(done);
+      }
+      else {
+        done(a);
+      }
+    });
+  };
 
-  _.mbind.case(
-    _.testArgs(_.isType('function'), _.isInstance(IO)),
-    function(fn, a) {
-      return new IO(function() {
-        return fn(a.perform()).perform();
+  IO.prototype.chain = function(fn) {
+    var self = this;
+
+    return new IO(function(done) {
+      return self.get(function(x) {
+        fn(x).get(done);
       });
-    }
-  );
+    });
+  };
 
-  _.fmap.case(
-    _.testArgs(_.isType('function'), _.isInstance(IO)),
-    function(fn, a) {
-      return _.mbind(function(x) {
-        return _.of(IO, fn(x));
-      }, a);
-    }
-  );
+  IO.prototype.fmap = function(fn) {
+    return this.chain(function(x) {
+      return IO.of(fn(x));
+    });
+  };
 
-  _.ap.case(
-    _.testArgs(_.isInstance(IO), _.isInstance(IO)),
-    function(a, b) {
-      return _.mbind(function(f) {
-        return _.fmap(f, b);
-      }, a);
-    }
-  );
+  IO.prototype.ap = function(a) {
+    return this.chain(function(f) {
+      return a.fmap(f);
+    });
+  };
 
   return IO;
 });

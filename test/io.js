@@ -3,70 +3,46 @@ var assert   = require('chai').assert,
     Maybe    = require('../src/maybe')
     IO       = require('../src/io');
 
-describe('IO Monad', function() {
+describe('Future/IO Monad', function() {
   // :: IO number
-  var randomNumber = function() {
-    return new IO(function() {
-      return Math.random();
+  var timeout = function(time, value) {
+    return new IO(function(done) {
+      setTimeout(function() {
+        done(value);
+      }, time);
     });
   };
 
-  // :: IO Maybe number
-  var maybeNumber = function() {
-    return new IO(function() {
-      var num = Math.random();
-
-      if (num > 0.5) {
-        return Maybe.some(num);
-      }
-      else {
-        return Maybe.none();
-      }
-    });
-  };
-
-  it('generates random numbers', function() {
-    var thing = _.Do(
-      randomNumber(),
-      randomNumber(),
+  it('chains async operations together', function(done) {
+    _.Do(
+      timeout(200, 'A'),
+      timeout(100, 'B'),
       function(a, b) {
-        console.log(a, b);
+        assert.equal(a, 'A');
+        assert.equal(b, 'B');
 
         return _.of(IO, a + b);
       }
-    ).perform();
+    ).get(function(x) {
+      assert.equal(x, 'AB');
+      done();
+    });
+  });
 
-    console.log(thing);
-
+  it('doubles as IO', function(done) {
     _.Do(
-      _.liftA(2, _.plus)(randomNumber(), randomNumber()),
-      function(a) {
-        console.log('added', a);
-        return _.of(IO, a);
+      new IO(_.K('A')),
+      timeout(100, 'B'),
+      function(a, b) {
+        assert.equal(a, 'A');
+        assert.equal(b, 'B');
+
+        return _.of(IO, a + b);
       }
-    ).perform();
-
-    var things = _.Do(
-      maybeNumber(),
-      maybeNumber(),
-      function(ma, mb) {
-        console.log('this far');
-
-        return _.of(IO, _.Do(
-          ma,
-          mb,
-          function(a, b) {
-            // Makes it here 25% of the time
-            console.log('yes?', a, b);
-
-            return _.of(Maybe, a + b);
-          }
-        ));
-      }
-    ).perform();
-
-    console.log('things', things.isSome(), things);
-
-    assert.equal(5,5);
+    ).perform(function(x) {
+      assert.equal(x, 'AB');
+      done();
+    });
   });
 });
+
